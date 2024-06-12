@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import MistralClient, { Message } from '@mistralai/mistralai';
-import { onMounted } from 'vue';
+import { ref } from 'vue';
+
+const mistral_prompt = ref("")
 
 const mistral = new MistralClient(import.meta.env.VITE_PUBLIC_MISTRAL_API_KEY)
 const model = 'open-mistral-7b';
@@ -25,7 +27,6 @@ const test = async () => {
     maxTokens: 20,
   });
 
-  console.log('Chat Response:');
   for await (const chunk of chatResponse) {
     if (chunk.choices[0].delta.content !== undefined) {
       const streamText = chunk.choices[0].delta.content;
@@ -36,16 +37,15 @@ const test = async () => {
   return chatResponse;
 }
 
-onMounted(() => {
-  test().then((res) => {
-    console.log(res)
-  })
-})
-
 </script>
 
 <template>
-  <h1 class="text-3xl font-bold underline">
-    Hello world!
-  </h1>
+  <main class="flex items-center justify-center w-full h-screen bg-zinc-900 text-slate-100">
+    <section class="flex items-center justify-evenly">
+      <input type="text" v-model="mistral_prompt" class="mx-4">
+      <button class="mx-4" @click="() => {
+        console.log(mistral_prompt)
+      }">Submit Prompt</button>
+    </section> 
+  </main>
 </template>
