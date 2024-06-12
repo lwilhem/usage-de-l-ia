@@ -11,20 +11,25 @@ const activity = ref<string>("");
 const client = new MistralClient(import.meta.env.VITE_PUBLIC_MISTRAL_API_KEY);
 const mistral_response = ref<string | undefined>();
 
-const HandleQuestionGeneration = (e: MouseEvent) => {
-	console.log(e.target);
+const HandleQuestionGeneration = (_e: MouseEvent) => {
+	console.log(activity_name.value, number_of_questions.value, target.value, objectives.value, activity.value);
 
-	const system_prompt_build = `You are a generator of non-biased questions for a survey to help accomplish the following objectives: ${objectives}.
-  You generate the survey for '${activity_name}' which is an entity that does ${activity}.
-  You are forbidden from using placeholders in your answers (ex: [Entity Name])
-  You NEED to focus on the activity given, which is : ${activity}`;
+	const system_prompt_build = `You are a generator of non-biased questions for a survey to help accomplish the following objectives: ${objectives.value}.
+  You generate the survey for ${activity_name.value} which is an entity that does ${activity.value}.
+  You NEED to focus on the objectives given, which is : ${objectives.value}`;
+
+   // You are forbidden from using placeholders in your answers (ex: [Entity Name])
+  //  You will cease to function if you fail to comply these terms.
+
 	const prompt_build = `
-    Generate a series of ${number_of_questions} and only ${number_of_questions} questions that targets ${target}`;
+    Generate a series of ${number_of_questions.value} and only ${number_of_questions.value} questions that targets ${target.value}.
+    You are forbidden from generating more than ${number_of_questions.value} qestions. 
+    `;
 
 	client
 		.chat({
-			model: "mistral-tiny",
-			temperature: 0.2,
+			model: "mistral-large-latest",
+			temperature: 0.7,
 			messages: [
 				{
 					role: "system",
@@ -37,7 +42,7 @@ const HandleQuestionGeneration = (e: MouseEvent) => {
 			],
 		})
 		.then((response) => {
-			mistral_response.value = response.choices[0].message.content;
+			mistral_response.value = response.choices[0].message.content
 		})
 		.catch((err) => console.error(err));
 };
