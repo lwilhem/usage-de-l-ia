@@ -1,51 +1,80 @@
 <script setup lang="ts">
-import MistralClient, { Message } from '@mistralai/mistralai';
+import MistralClient from '@mistralai/mistralai';
 import { ref } from 'vue';
 
-const mistral_prompt = ref("")
 
-const mistral = new MistralClient(import.meta.env.VITE_PUBLIC_MISTRAL_API_KEY)
-const model = 'open-mistral-7b';
-const messages: Message[] = [
-  {
-    role: 'system',
-    content:
-      "You're a sport expert with more than 40 years experience, and give advice and programm for every person depand on their size, age, and weight.",
-  },
-  {
-    role: 'user',
-    content:
-      "I'm looking for a workout program that will help me lose weight and build muscle. I'm 22 years old, 1m84, and weigh 85kg. Can you help me?",
-  },
-];
+const activity_name = ref<string>('')
+const number_of_questions = ref<number>(0)
+const target = ref<string>('')
+const objectives = ref<string>('')
+const activity = ref<string>('')
 
-const test = async () => {
+const client = new MistralClient(import.meta.env.VITE_PUBLIC_MISTRAL_API_KEY);
+const mistral_response = ref<string | undefined>()
 
-  const chatResponse =  mistral.chatStream({
-    model: model,
-    messages: messages,
-    maxTokens: 20,
-  });
+const HandleQuestionGeneration = (e: MouseEvent) => {
+  console.log(e.target)
 
-  for await (const chunk of chatResponse) {
-    if (chunk.choices[0].delta.content !== undefined) {
-      const streamText = chunk.choices[0].delta.content;
-      console.log(streamText)
-    }
-  }
+  const prompt_build = `
+    Generate a series of ${number_of_questions} questions adapted for a professionnal survey,
+    the questions you generate are asked by ${activity_name}, a ${activity}, 
+    and needs to be respecting the following constraints:
+    - the targets of your questions are ${target}
+    - your question neefs to accomplish the following objectives: ${objectives}
+    `
 
-  return chatResponse;
+  client.chat({
+    model: "open-mistral-7b",
+    messages: [
+      {
+        role: "user",
+        content: prompt_build
+      }
+    ]
+  })
+  .then((response) => {
+    mistral_response.value = response.choices[0].message.content
+  })
+  .catch(err => console.error(err))
 }
 
 </script>
 
 <template>
-  <main class="flex items-center justify-center w-full h-screen bg-zinc-900 text-slate-100">
-    <section class="flex items-center justify-evenly">
-      <input type="text" v-model="mistral_prompt" class="mx-4">
-      <button class="mx-4" @click="() => {
-        console.log(mistral_prompt)
-      }">Submit Prompt</button>
-    </section> 
+  <main class="w-full h-screen flex items-center justify-evenly bg-zinc-900 text-slate-100">
+    <section class="flex flex-col items-center justify-center bg-red-500 w-[44rem] h-96 text-zinc-900">
+
+      <label class="flex flex-col">
+        <span class="text-sm font-light lowercase font-mono">nom de votre activité</span>
+        <input type="text" v-model="activity_name">
+      </label>
+
+      <label class="flex flex-col">
+        <span class="text-sm font-light lowercase font-mono">nombre de questions</span>
+        <input type="number" v-model="number_of_questions">
+      </label>
+
+      <label class="flex flex-col">
+        <span class="text-sm font-light lowercase font-mono">Cible de vos questions</span>
+        <input type="text" v-model="target">
+      </label>
+
+      <label class="flex flex-col">
+        <span class="text-sm font-light lowercase font-mono">Objectifs / thème</span>
+        <textarea v-model="objectives" />
+      </label>
+
+      <label class="flex flex-col">
+        <span class="text-sm font-light lowercase font-mono">Activité</span>
+        <input type="text" v-model="activity">
+      </label>
+
+      <button @click="HandleQuestionGeneration">submit form</button>
+    </section>
+
+    <section v-if="mistral_response">
+      <p>{{ mistral_response }}</p>
+     </section>
   </main>
 </template>
+
