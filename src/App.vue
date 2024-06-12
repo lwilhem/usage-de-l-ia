@@ -21,12 +21,12 @@ const generatedQuestions = computed(() => {
 			.filter((q) => q.trim() !== "");
 		return questions
 			.slice(0, number_of_questions.value)
-			.map((q, i) => `${q.replace(/^\d+\.\s*/, "").trim()}`);
+			.map((q, _i) => `${q.replace(/^\d+\.\s*/, "").trim()}`);
 	}
 	return [];
 });
 
-const HandleQuestionGeneration = (_e: MouseEvent) => {
+const HandleQuestionGeneration = (_e: Event) => {
 	console.log(
 		activity_name.value,
 		number_of_questions.value,
